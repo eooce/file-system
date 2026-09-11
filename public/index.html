@@ -1,95 +1,237 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Files System</title>
+    <title>Files System - 云盘</title>
     <meta name="description" content="文件管理系统-随时随地的保存你的文件在云端" />
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="index.css">
 </head>
 <body>
-    <div class="container">
-        <h1>Files System</h1>
-        <div class="card-upload">
-            <div class="upload-form-row">
-                <input type="file" id="fileInput" multiple style="display:none;">
-                <input type="file" id="folderInput" multiple webkitdirectory style="display:none;">
-                <button type="button" class="upload-btn" onclick="document.getElementById('fileInput').click()">选择文件</button>
-                <button type="button" class="upload-btn" onclick="document.getElementById('folderInput').click()">选择文件夹</button>
-                <select id="subdirSelect" class="upload-select">
-                    <option value="">根目录</option>
-                    <option value="videos">Videos</option>
-                    <option value="audios">Audios</option>
-                    <option value="pictures">Pictures</option>
-                    <option value="documents">Documents</option>
-                    <option value="others">Others</option>
-                </select>
-                <button type="button" class="upload-btn" onclick="triggerUpload()">开始上传</button>
+    <div class="app-layout">
+        <!-- 侧边栏 -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-brand">
+                <div class="brand-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/>
+                    </svg>
+                </div>
+                <span class="brand-name">Files System</span>
             </div>
-            <div id="selectedFiles" class="selected-files-box"></div>
-            <div id="uploadStatus"></div>
-        </div>
-        <div class="file-list-toolbar" style="display:flex;align-items:center;gap:10px;">
-            <button id="backBtn" style="display:none;" onclick="goBackDir()">⬅ 返回上级目录</button>
-            <button id="batchDeleteBtn" disabled onclick="batchDelete()">批量删除</button>
-            <button id="batchMoveBtn" disabled onclick="batchMove()">批量移动</button>
-            <span class="file-list-title">File List</span>
-            <select id="filterSubdir" onchange="fetchFiles()">
-                <option value="">All Directories</option>
-                <option value="">根目录</option>
-                <option value="videos">Videos</option>
-                <option value="audios">Audios</option>
-                <option value="pictures">Pictures</option>
-                <option value="documents">Documents</option>
-                <option value="others">Others</option>
-            </select>
-            <button class="refresh-btn" onclick="fetchFiles()">刷新列表</button>
-        </div>
-        <div class="table-wrapper">
-            <table id="fileTable">
-                <thead style="height: 2.9rem;">
-                    <tr>
-                        <th><input type="checkbox" id="selectAll"></th>
-                        <th>Name</th>
-                        <th>Directory</th>
-                        <th>Type</th>
-                        <th>Size</th>
-                        <th>Last Modified</th>
-                        <th>Action</th>
-                    </tr>
-                </thead>
-                <tbody></tbody>
-            </table>
-        </div>
+
+            <button class="btn-new-upload" onclick="document.getElementById('fileInput').click()">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+                上传文件
+            </button>
+
+            <nav class="sidebar-nav">
+                <a href="#" class="nav-item active" data-dir="">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+                    <span>我的文件</span>
+                </a>
+                <a href="#" class="nav-item" data-dir="videos">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg>
+                    <span>Videos</span>
+                </a>
+                <a href="#" class="nav-item" data-dir="audios">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+                    <span>Audios</span>
+                </a>
+                <a href="#" class="nav-item" data-dir="pictures">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                    <span>Pictures</span>
+                </a>
+                <a href="#" class="nav-item" data-dir="documents">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <span>Documents</span>
+                </a>
+                <a href="#" class="nav-item" data-dir="others">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+                    <span>Others</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-storage">
+                <div class="storage-ring">
+                    <svg viewBox="0 0 36 36" width="44" height="44">
+                        <circle cx="18" cy="18" r="15.5" fill="none" stroke="#e2e8f0" stroke-width="4"/>
+                        <circle class="storage-ring-progress" cx="18" cy="18" r="15.5" fill="none" stroke="url(#gradStorage)" stroke-width="4"
+                            stroke-linecap="round" stroke-dasharray="97.4" stroke-dashoffset="97.4" transform="rotate(-90 18 18)"/>
+                        <defs>
+                            <linearGradient id="gradStorage" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stop-color="#4f6ef7"/>
+                                <stop offset="100%" stop-color="#7c3aed"/>
+                            </linearGradient>
+                        </defs>
+                    </svg>
+                    <span class="storage-percent" id="storagePercent">0%</span>
+                </div>
+                <div class="storage-info">
+                    <div class="storage-used" id="storageUsed">0 B 已使用</div>
+                    <div class="storage-total" id="storageTotal">共 10 GB</div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 主区域 -->
+        <main class="main-area">
+            <!-- 顶栏 -->
+            <header class="topbar">
+                <button class="icon-btn sidebar-toggle" id="sidebarToggle" aria-label="菜单">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+                </button>
+                <nav class="breadcrumb" id="breadcrumb">
+                    <span class="crumb active">我的文件</span>
+                </nav>
+                <div class="topbar-actions">
+                    <button class="icon-btn" onclick="fetchFiles()" title="刷新">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+                    </button>
+                    <button class="icon-btn" id="viewToggle" onclick="toggleView()" title="切换视图">
+                        <svg id="iconGrid" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+                        <svg id="iconList" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="display:none;"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+                    </button>
+                </div>
+            </header>
+
+            <!-- 工具条 -->
+            <div class="action-bar" id="actionBar">
+                <div class="action-bar-left">
+                    <button id="backBtn" style="display:none;" class="btn-ghost" onclick="goBackDir()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+                        返回上级
+                    </button>
+                    <span class="selection-info" id="selectionInfo" style="display:none;"></span>
+                </div>
+                <div class="action-bar-right">
+                    <button id="batchMoveBtn" disabled class="btn-ghost" onclick="batchMove()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 9 2 12 5 15"/><polyline points="9 5 12 2 15 5"/><polyline points="15 19 12 22 9 19"/><polyline points="19 9 22 12 19 15"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="12" y1="2" x2="12" y2="22"/></svg>
+                        移动
+                    </button>
+                    <button id="batchDeleteBtn" disabled class="btn-ghost btn-danger-ghost" onclick="batchDelete()">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                        删除
+                    </button>
+                </div>
+            </div>
+
+            <!-- 拖拽上传遮罩 -->
+            <div class="drop-overlay" id="dropOverlay">
+                <div class="drop-overlay-inner">
+                    <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    <p>松开鼠标，上传到当前目录</p>
+                </div>
+            </div>
+
+            <!-- 文件区域 -->
+            <div class="content-area" id="contentArea">
+                <!-- 网格视图 -->
+                <div class="file-grid" id="fileGrid"></div>
+                <!-- 列表视图 -->
+                <div class="table-wrapper" id="listView">
+                    <table id="fileTable">
+                        <thead>
+                            <tr>
+                                <th class="col-check"><input type="checkbox" id="selectAll"></th>
+                                <th>名称</th>
+                                <th>位置</th>
+                                <th>类型</th>
+                                <th>大小</th>
+                                <th>修改时间</th>
+                                <th class="col-action"></th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 上传面板 -->
+            <div class="upload-panel" id="uploadPanel">
+                <div class="upload-panel-header" onclick="toggleUploadPanel()">
+                    <div class="upload-panel-title">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        <span id="uploadPanelTitle">上传任务</span>
+                    </div>
+                    <svg class="upload-panel-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="6 9 12 15 18 9"/></svg>
+                </div>
+                <div class="upload-panel-body" id="uploadPanelBody">
+                    <input type="file" id="fileInput" multiple style="display:none;">
+                    <input type="file" id="folderInput" multiple webkitdirectory style="display:none;">
+                    <div class="upload-controls">
+                        <button type="button" class="btn-ghost" onclick="document.getElementById('folderInput').click()">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                            选择文件夹
+                        </button>
+                        <select id="subdirSelect" class="upload-select">
+                            <option value="">根目录</option>
+                            <option value="videos">Videos</option>
+                            <option value="audios">Audios</option>
+                            <option value="pictures">Pictures</option>
+                            <option value="documents">Documents</option>
+                            <option value="others">Others</option>
+                        </select>
+                    </div>
+                    <div id="selectedFiles" class="selected-files-box"></div>
+                    <div id="uploadProgressList"></div>
+                    <div id="uploadStatus"></div>
+                </div>
+            </div>
+        </main>
     </div>
 
     <!-- 重命名模态框 -->
     <div id="renameModal" class="modal">
         <div class="modal-content">
-            <span class="close">&times;</span>
-            <h3>Rename File</h3>
-            <input type="text" id="newFileName" placeholder="Enter new filename">
-            <button onclick="confirmRename()">Rename</button>
+            <div class="modal-header">
+                <h3>重命名</h3>
+                <span class="close">&times;</span>
+            </div>
+            <input type="text" id="newFileName" placeholder="输入新的文件名">
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeRenameModal()">取消</button>
+                <button onclick="confirmRename()">确定</button>
+            </div>
         </div>
     </div>
 
     <!-- 移动模态框 -->
     <div id="moveModal" class="modal">
-        <div class="modal-content">
-            <span class="close-move">&times;</span>
-            <h3>Move File</h3>
+        <div class="modal-content modal-content-sm">
+            <div class="modal-header">
+                <h3>移动到</h3>
+                <span class="close-move">&times;</span>
+            </div>
             <select id="moveTargetDir"></select>
-            <button onclick="confirmMove()">Move</button>
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeMoveModal()">取消</button>
+                <button onclick="confirmMove()">移动</button>
+            </div>
         </div>
     </div>
-    <!-- 全局中间提示 -->
+
+    <!-- 确认模态框 -->
+    <div id="confirmModal" class="modal">
+        <div class="modal-content modal-content-sm">
+            <div class="modal-header">
+                <h3 id="confirmTitle">确认操作</h3>
+                <span class="close-confirm">&times;</span>
+            </div>
+            <p class="confirm-message" id="confirmMessage"></p>
+            <div class="modal-actions">
+                <button class="modal-btn-secondary" onclick="closeConfirmModal(false)">取消</button>
+                <button class="modal-btn-danger" id="confirmOkBtn" onclick="closeConfirmModal(true)">确定</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
     <div id="toast" class="toast" style="display:none;"></div>
+
     <script src="script.js"></script>
-    <!-- footer-->
-    <footer class="copyright-bar">
-        <a href="https://github.com/eooce/file-system" target="_blank" style="display:inline-flex;align-items:center;text-decoration:none;color:inherit;">
-            File system | Powered by eooce &nbsp;&nbsp;&nbsp;<svg height="1.7rem" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true" style="vertical-align:middle;"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.19 0 .21.15.46.55.38A8.013 8.013 0 0 0 16 8c0-4.42-3.58-8-8-8z"></path></svg>
-        </a>
-    </footer>
 </body>
 </html>
