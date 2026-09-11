@@ -13,6 +13,22 @@ const PORT = process.env.PORT || 9999;
 const USERNAME = process.env.USERNAME || 'admin';
 const PASSWORD = process.env.PASSWORD || 'admin';
 
+// 存储配额，默认 10G
+function parseQuotaSize(raw) {
+    const DEFAULT_QUOTA = 10 * 1024 * 1024 * 1024; // 10 GB
+    if (!raw) return DEFAULT_QUOTA;
+    const m = String(raw).trim().match(/^([\d.]+)\s*([kmgt]i?b?)?$/i);
+    if (!m || isNaN(parseFloat(m[1]))) {
+        console.warn(`QUOTA_SIZE 格式无效: "${raw}"，使用默认 10G`);
+        return DEFAULT_QUOTA;
+    }
+    const value = parseFloat(m[1]);
+    const unit = (m[2] || '').toLowerCase().replace('i', '').replace('b', '');
+    const mult = { '': 1, 'k': 1024, 'm': 1024 ** 2, 'g': 1024 ** 3, 't': 1024 ** 4 };
+    return Math.round(value * (mult[unit] !== undefined ? mult[unit] : 1));
+}
+const QUOTA_SIZE = parseQuotaSize(process.env.QUOTA_SIZE);
+
 const FILES_DIR = path.join(__dirname, 'files');
 
 // 确保 files 目录和子目录存在
@@ -126,6 +142,11 @@ app.get('/api/files', (req, res) => {
 app.get('/api/subdirs', authMiddleware, (req, res) => {
     const subdirs = ['videos', 'audios', 'pictures', 'documents', 'others'];
     res.json(subdirs);
+});
+
+// 获取存储配额（字节）
+app.get('/api/quota', authMiddleware, (req, res) => {
+    res.json({ quota: QUOTA_SIZE });
 });
 
 // 文件直链下载
