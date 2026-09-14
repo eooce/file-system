@@ -628,6 +628,8 @@ function showSelectedFiles(inputId) {
     }
     pendingFiles = Array.from(files);
     lastInputId = inputId;
+    // 展开上传面板，确保“开始上传”按钮可见
+    document.getElementById('uploadPanel').classList.remove('collapsed');
     selectedDiv.style.display = 'block';
     let folderName = null;
     if (files.length > 0 && files[0].webkitRelativePath) {
