@@ -54,8 +54,12 @@ ensureDirectories();
 // 安全验证多级路径
 function sanitizePath(relPath) {
     if (!relPath || relPath.trim() === '') throw new Error('Invalid path: empty');
-    if (relPath.includes('..')) throw new Error('Invalid path: path traversal detected');
-    return relPath;
+    const resolved = path.resolve(FILES_DIR, relPath);
+    const base = path.resolve(FILES_DIR) + path.sep;
+    if (!(resolved + path.sep).startsWith(base) && resolved !== path.resolve(FILES_DIR)) {
+        throw new Error('Invalid path: path traversal detected');
+    }
+    return path.relative(FILES_DIR, resolved);
 }
 
 // Basic Auth 配置
@@ -68,16 +72,20 @@ const authMiddleware = basicAuth({
 // 文件存储配置
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const subdir = req.query.subdir;
-        let uploadDir = subdir ? path.join(FILES_DIR, subdir) : FILES_DIR;
-        const relativePath = req.query.relativePath;
-        if (relativePath) {
-            // 去掉文件名部分，只保留目录
-            const relDir = path.dirname(relativePath);
-            uploadDir = path.join(uploadDir, relDir);
+        try {
+            const subdir = req.query.subdir;
+            let uploadDir = subdir ? path.join(FILES_DIR, sanitizePath(subdir)) : FILES_DIR;
+            const relativePath = req.query.relativePath;
+            if (relativePath) {
+                // 去掉文件名部分，只保留目录
+                const relDir = path.dirname(relativePath);
+                uploadDir = relDir === '.' ? uploadDir : path.join(uploadDir, sanitizePath(relDir));
+            }
+            fs.mkdirSync(uploadDir, { recursive: true });
+            cb(null, uploadDir);
+        } catch (e) {
+            cb(e);
         }
-        try { fs.mkdirSync(uploadDir, { recursive: true }); } catch (e) {}
-        cb(null, uploadDir);
     },
     filename: (req, file, cb) => {
         let filename = file.originalname;
@@ -113,7 +121,12 @@ app.use((req, res, next) => {
 // 获取文件列表
 app.get('/api/files', (req, res) => {
     const subdir = req.query.subdir || '';
-    const targetDir = subdir ? path.join(FILES_DIR, subdir) : FILES_DIR;
+    let targetDir;
+    try {
+        targetDir = subdir ? path.join(FILES_DIR, sanitizePath(subdir)) : FILES_DIR;
+    } catch (e) {
+        return res.status(400).json({ error: e.message });
+    }
     fs.readdir(targetDir, { withFileTypes: true }, (err, files) => {
         if (err) {
             return res.status(500).json({ error: 'Unable to read directory' });
